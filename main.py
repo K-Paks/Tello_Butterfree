@@ -1,24 +1,31 @@
 from easytello_fix import PokeTello
+import numpy as np
+import cv2
 
-
-
+width = 320
+height = 240
+fly = 0
 
 
 drone = PokeTello()
-
-drone.takeoff()
-
 print(drone.get_battery())
 
-drone.get_acceleration()
-drone.get_speed()
+if fly:
+    drone.takeoff()
 
+    drone.land()
 
-drone.rc_control(0, 10, 0, 0)
-# time.sleep(3)
-drone.rc_control(10, 0, 0, 0)
+drone.streamoff()
+drone.streamon()
 
+while True:
+    if drone.frame is not None:
+        # cv2.imshow('Cap', drone.frame)
+        img = cv2.resize(drone.frame, (width, height))
+        cv2.imshow('Cap', img)
 
-
-drone.land()
+        # Video S`tream is closed if escape key is pressed
+        k = cv2.waitKey(1) & 0xFF
+        if k == 27:
+            break
 
