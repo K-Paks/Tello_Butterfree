@@ -1,7 +1,6 @@
 from easytello import tello
 from easytello.stats import  Stats
 import cv2
-from threading import Thread
 import threading
 
 
@@ -16,11 +15,15 @@ class PokeTello(tello.Tello):
 
         # Sending command to Tello
         self.socket.sendto(command.encode('utf-8'), self.tello_address)
+
+    def takeoff(self):
+        self.send_command_no_response('takeoff')
+
     def rc_control(self, a: int, b: int, c: int, d: int):
         self.send_command_no_response('rc {} {} {} {}'.format(a, b, c, d))
 
     def streamon(self):
-        self.send_command('streamon')
+        self.send_command_no_response('streamon')
         self.stream_state = True
         self.video_thread = threading.Thread(target=self._video_thread)
         self.video_thread.daemon = True
@@ -32,5 +35,5 @@ class PokeTello(tello.Tello):
         # Runs while 'stream_state' is True
         while self.stream_state:
             ret, frame = cap.read()
-            # cv2.imshow('DJI Tello', frame)
+
             self.frame = frame
