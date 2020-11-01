@@ -55,15 +55,16 @@ while True:
             ud, yaw = 0, 0
 
         if area < 4000 and area != 0:
-            fb = 10
+            fb = 15
         elif area > 5000:
-            fb = -10
+            fb = -15
         else:
             fb = 0
 
         # print(fb)
 
         drone.rc_control(lr, fb, ud, yaw)
+        # print(drone.get_acceleration())
 
         # cv2.imshow('Cap', img)
         # cv2.imshow('Cap2', imgHsv)

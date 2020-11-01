@@ -14,7 +14,7 @@ class TrackbarWindow:
             init_thr1, init_thr2, init_area = 166, 171, 2000
         elif color == 'green':
             init_h_min, init_h_max, init_s_min, init_s_max, init_v_min, init_v_max = 75, 90, 30, 170, 40, 245
-            init_thr1, init_thr2, init_area = 0, 255, 0
+            init_thr1, init_thr2, init_area = 0, 255, 1000
         else:
             init_h_min, init_h_max, init_s_min, init_s_max, init_v_min, init_v_max = 0, 179, 0, 255, 0, 255
             init_thr1, init_thr2, init_area = 0, 255, 0
