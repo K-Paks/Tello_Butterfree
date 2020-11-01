@@ -163,12 +163,18 @@ def get_contours(raw_img, img, img_contour, frame_w, frame_h, dead_zone, area_mi
             cand_dil, cand_res = prepare_img(data_green, candidate_img)
             correct_candidate = get_candidate_contours(cand_dil, cand_contour, area_min_green)
 
-            stack_cand = stack_images(1, ([candidate_img, cand_res], [cand_dil, cand_contour]))
-            cv2.imshow('candidate', stack_cand)
+            if not correct_candidate:
+                no_candidate = np.zeros((240, 320, 3), np.uint8)
+                stack_cand = stack_images(1, ([no_candidate, no_candidate], [no_candidate, no_candidate]))
+                cv2.imshow('candidate', stack_cand)
 
-            cv2.rectangle(img_contour, (x, y), (x + w, y + h), (0, 255, 0), 5)
+            elif correct_candidate:
+                print(area)
+                stack_cand = stack_images(1, ([candidate_img, cand_res], [cand_dil, cand_contour]))
+                cv2.imshow('candidate', stack_cand)
 
-            if correct_candidate:
+                cv2.rectangle(img_contour, (x, y), (x + w, y + h), (0, 255, 0), 5)
+
                 # cv2.putText(img_contour, "Points: " + str(len(approx)), (x + w + 20, y + 20), cv2.FONT_HERSHEY_COMPLEX, .7,
                 #             (0, 255, 0), 2)
                 # cv2.putText(img_contour, "Area: " + str(int(area)), (x + w + 20, y + 45), cv2.FONT_HERSHEY_COMPLEX, 0.7,
@@ -210,8 +216,6 @@ def get_contours(raw_img, img, img_contour, frame_w, frame_h, dead_zone, area_mi
                          (0, 0, 255), 3)
 
                 return direction, area, crop_xywh
-            else:
-                continue
     return direction, area, crop_xywh
 
 

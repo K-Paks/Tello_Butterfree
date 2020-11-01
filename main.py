@@ -5,7 +5,7 @@ width = 320
 height = 240
 deadZone = 70
 
-fly = 0
+fly = 1
 
 drone = PokeTello()
 print(drone.get_battery())
