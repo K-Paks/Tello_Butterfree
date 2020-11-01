@@ -5,8 +5,9 @@ from utils import *
 
 width = 320
 height = 240
-fly = 1
+deadZone = 70
 
+fly = 0
 
 drone = PokeTello()
 print(drone.get_battery())
@@ -14,27 +15,15 @@ print(drone.get_battery())
 if fly:
     drone.takeoff()
 
+# create trackbars
+white_num = 0
+white_trackbars = TrackbarWindow(white_num, color='white')
+green_trackbars = TrackbarWindow(1)
 
-def empty(a):
-    pass
 
 
-deadZone = 70
 
-cv2.namedWindow("HSV")
-cv2.resizeWindow("HSV", 640, 240)
-cv2.createTrackbar("HUE Min", "HSV", 0, 179, empty)
-cv2.createTrackbar("HUE Max", "HSV", 179, 179, empty)
-cv2.createTrackbar("SAT Min", "HSV", 0, 255, empty)
-cv2.createTrackbar("SAT Max", "HSV", 59, 255, empty)
-cv2.createTrackbar("VALUE Min", "HSV", 220, 255, empty)
-cv2.createTrackbar("VALUE Max", "HSV", 255, 255, empty)
 
-cv2.namedWindow("Parameters")
-cv2.resizeWindow("Parameters", 640, 240)
-cv2.createTrackbar("Threshold1", "Parameters", 166, 255, empty)
-cv2.createTrackbar("Threshold2", "Parameters", 171, 255, empty)
-cv2.createTrackbar("Area", "Parameters", 2000, 30000, empty)
 
 
 drone.streamon()
@@ -45,12 +34,9 @@ while True:
         imgContour = img.copy()
         imgHsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-        h_min = cv2.getTrackbarPos("HUE Min","HSV")
-        h_max = cv2.getTrackbarPos("HUE Max", "HSV")
-        s_min = cv2.getTrackbarPos("SAT Min", "HSV")
-        s_max = cv2.getTrackbarPos("SAT Max", "HSV")
-        v_min = cv2.getTrackbarPos("VALUE Min", "HSV")
-        v_max = cv2.getTrackbarPos("VALUE Max", "HSV")
+        h_min, h_max, s_min, s_max, v_min, v_max, threshold1, threshold2, areaMin = white_trackbars.getTrackbarValues()
+        print(h_min, h_max, s_min, s_max, v_min, v_max)
+
 
         lower = np.array([h_min, s_min, v_min])
         upper = np.array([h_max, s_max, v_max])
@@ -60,13 +46,11 @@ while True:
 
         imgBlur = cv2.GaussianBlur(result, (5, 5), 1)
         imgGray = cv2.cvtColor(imgBlur, cv2.COLOR_BGR2GRAY)
-        threshold1 = cv2.getTrackbarPos("Threshold1", "Parameters")
-        threshold2 = cv2.getTrackbarPos("Threshold2", "Parameters")
         imgCanny = cv2.Canny(imgGray, threshold1, threshold2)
 
         kernel = np.ones((5, 5))
         imgDil = cv2.dilate(imgCanny, kernel, iterations=2)
-        direction, area = getContours(imgDil, imgContour, width, height, deadZone)
+        direction, area = getContours(imgDil, imgContour, width, height, deadZone, areaMin)
         display(imgContour, width, height, deadZone)
 
         stack = stackImages(1, ([img, result], [imgDil, imgContour]))

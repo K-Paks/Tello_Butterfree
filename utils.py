@@ -1,5 +1,54 @@
 import cv2.cv2 as cv2
 import numpy as np
+from typing import Optional
+
+def empty(a):
+    pass
+
+class TrackbarWindow():
+    def __init__(self, num, color=None):
+        if color == 'white':
+            init_h_min, init_h_max, init_s_min, init_s_max, init_v_min, init_v_max = 0, 179, 0, 59, 220, 255
+            init_thr1, init_thr2, init_area = 166, 171, 2000
+        else:
+            init_h_min, init_h_max, init_s_min, init_s_max, init_v_min, init_v_max = 0, 179, 0, 255, 0, 255
+            init_thr1, init_thr2, init_area = 0, 255, 0
+
+
+
+        cv2.namedWindow(f"HSV_{num}")
+        cv2.resizeWindow(f"HSV_{num}", 640, 240)
+        cv2.createTrackbar(f"HUE Min_{num}", f"HSV_{num}", init_h_min, 179, empty)
+        cv2.createTrackbar(f"HUE Max_{num}", f"HSV_{num}", init_h_max, 179, empty)
+        cv2.createTrackbar(f"SAT Min_{num}", f"HSV_{num}", init_s_min, 255, empty)
+        cv2.createTrackbar(f"SAT Max_{num}", f"HSV_{num}", init_s_max, 255, empty)
+        cv2.createTrackbar(f"VALUE Min_{num}", f"HSV_{num}", init_v_min, 255, empty)
+        cv2.createTrackbar(f"VALUE Max_{num}", f"HSV_{num}", init_v_max, 255, empty)
+
+        cv2.namedWindow(f"Parameters_{num}")
+        cv2.resizeWindow(f"Parameters_{num}", 640, 240)
+        cv2.createTrackbar(f"Threshold1_{num}", f"Parameters_{num}", init_thr1, 255, empty)
+        cv2.createTrackbar(f"Threshold2_{num}", f"Parameters_{num}", init_thr2, 255, empty)
+        cv2.createTrackbar(f"Area_{num}", f"Parameters_{num}", init_area, 30000, empty)
+        self.num = num
+
+    def getTrackbarValues(self):
+        h_min = cv2.getTrackbarPos(f"HUE Min_{self.num}", f"HSV_{self.num}")
+        h_max = cv2.getTrackbarPos(f"HUE Max_{self.num}", f"HSV_{self.num}")
+        s_min = cv2.getTrackbarPos(f"SAT Min_{self.num}", f"HSV_{self.num}")
+        s_max = cv2.getTrackbarPos(f"SAT Max_{self.num}", f"HSV_{self.num}")
+        v_min = cv2.getTrackbarPos(f"VALUE Min_{self.num}", f"HSV_{self.num}")
+        v_max = cv2.getTrackbarPos(f"VALUE Max_{self.num}", f"HSV_{self.num}")
+
+        threshold1 = cv2.getTrackbarPos(f"Threshold1_{self.num}", f"Parameters_{self.num}")
+        threshold2 = cv2.getTrackbarPos(f"Threshold2_{self.num}", f"Parameters_{self.num}")
+        areaMin = cv2.getTrackbarPos(f"Area_{self.num}", f"Parameters_{self.num}")
+
+        return h_min, h_max, s_min, s_max, v_min, v_max, threshold1, threshold2, areaMin
+
+
+
+
 
 # code by Murtaza's Workshop (Youtube)
 def stackImages(scale, imgArray):
@@ -35,7 +84,8 @@ def stackImages(scale, imgArray):
     return ver
 
 
-def getContours(img, imgContour, frameWidth, frameHeight, deadZone):
+
+def getContours(img, imgContour, frameWidth, frameHeight, deadZone, areaMin):
     direction = 0
     area = 0
 
@@ -45,7 +95,6 @@ def getContours(img, imgContour, frameWidth, frameHeight, deadZone):
 
     for cnt in contours:
         area = cv2.contourArea(cnt)
-        areaMin = cv2.getTrackbarPos("Area", "Parameters")
         if area > areaMin:
             cv2.drawContours(imgContour, cnt, -1, (255, 0, 255), 7)
             peri = cv2.arcLength(cnt, True)
