@@ -18,8 +18,9 @@ if fly:
 
 # create trackbars
 white_num = 0
+green_num = 1
 white_trackbars = TrackbarWindow(white_num, color='white')
-green_trackbars = TrackbarWindow(1)
+green_trackbars = TrackbarWindow(green_num, color='green')
 
 
 
@@ -29,28 +30,34 @@ while True:
         img = cv2.resize(drone.frame, (width, height))
         imgContour = img.copy()
 
-        data = white_trackbars.getTrackbarValues() # returns: (h_min, h_max, s_min, s_max, v_min, v_max, threshold1, threshold2, areaMin)
-        areaMin = data[-1]
+        data_white = white_trackbars.getTrackbarValues() # returns: (h_min, h_max, s_min, s_max, v_min, v_max, threshold1, threshold2, areaMin)
+        areaMin_white = data_white[-1]
 
-        imgDil, result = prepareImg(data, img)
+        imgDil, result = prepareImg(data_white, img)
 
-        direction, area, crop_xywh = getContours(imgDil, imgContour, width, height, deadZone, areaMin)
+        direction, area, crop_xywh = getContours(imgDil, imgContour, width, height, deadZone, areaMin_white)
         display(imgContour, width, height, deadZone)
 
 
-        # candidate
+        # candidate processing
         if crop_xywh is not None:
             x, y, w, h = crop_xywh
-            candidate_area = img[y:y+h, x:x+w]
-            candidate_area = cv2.resize(candidate_area, (320, 240))
+            candidate_img = img[y:y+h, x:x+w]
+            candidate_img = cv2.resize(candidate_img, (320, 240))
         else:
-            candidate_area = np.zeros((240, 320, 3), np.uint8)
-        candidate_area = cv2.cvtColor(candidate_area, cv2.COLOR_BGR2GRAY)
+            candidate_img = np.zeros((240, 320, 3), np.uint8)
+
+        candContour = candidate_img.copy()
+        data_green = green_trackbars.getTrackbarValues()
+        areaMin_green = data_green[-1]
+
+        candDil, candRes = prepareImg(data_green, candidate_img)
+        getContoursTemp(candDil, candContour, areaMin_green)
 
 
 
-
-        cv2.imshow('candidate', candidate_area)
+        stack_cand = stackImages(1, ([candidate_img, candRes], [candDil, candContour]))
+        cv2.imshow('candidate', stack_cand)
 
         stack = stackImages(1, ([img, result], [imgDil, imgContour]))
         cv2.imshow('Horizontal Stacking', stack)

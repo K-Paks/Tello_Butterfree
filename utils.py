@@ -13,6 +13,9 @@ class TrackbarWindow():
         if color == 'white': #predefined values for mapping whites only
             init_h_min, init_h_max, init_s_min, init_s_max, init_v_min, init_v_max = 0, 179, 0, 59, 220, 255
             init_thr1, init_thr2, init_area = 166, 171, 2000
+        elif color == 'green':
+            init_h_min, init_h_max, init_s_min, init_s_max, init_v_min, init_v_max = 75, 90, 30, 170, 40, 245
+            init_thr1, init_thr2, init_area = 0, 255, 0
         else:
             init_h_min, init_h_max, init_s_min, init_s_max, init_v_min, init_v_max = 0, 179, 0, 255, 0, 255
             init_thr1, init_thr2, init_area = 0, 255, 0
@@ -99,6 +102,25 @@ def prepareImg(data, img):
     kernel = np.ones((5, 5))
     imgDil = cv2.dilate(imgCanny, kernel, iterations=2)
     return imgDil, result
+
+def getContoursTemp(img, imgContour, areaMin):
+    direction = 0
+    area = 0
+    crop_xywh = None
+
+    contours, hierarchy = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+    for cnt in contours:
+        area = cv2.contourArea(cnt)
+        if area > areaMin:
+            cv2.drawContours(imgContour, cnt, -1, (255, 0, 255), 7)
+            peri = cv2.arcLength(cnt, True)
+            approx = cv2.approxPolyDP(cnt, 0.02 * peri, True)
+
+            x, y, w, h = cv2.boundingRect(approx)
+            crop_xywh = x, y, w, h
+
+            cv2.rectangle(imgContour, (x, y), (x + w, y + h), (0, 255, 0), 5)
 
 def getContours(img, imgContour, frameWidth, frameHeight, deadZone, areaMin):
     direction = 0
