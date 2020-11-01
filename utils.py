@@ -10,7 +10,7 @@ def empty(a):
 # class used to create trackbar window and get their parameters
 class TrackbarWindow():
     def __init__(self, num, color=None):
-        if color == 'white': #predefined values for mapping whites only
+        if color == 'white':  #predefined values for mapping whites only
             init_h_min, init_h_max, init_s_min, init_s_max, init_v_min, init_v_max = 0, 179, 0, 59, 220, 255
             init_thr1, init_thr2, init_area = 166, 171, 2000
         elif color == 'green':
