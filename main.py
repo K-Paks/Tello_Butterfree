@@ -1,6 +1,4 @@
 from easytello_fix import PokeTello
-import numpy as np
-import cv2
 from utils import *
 
 width = 320
@@ -27,18 +25,18 @@ while True:
         img = cv2.resize(drone.frame, (width, height))
         imgContour = img.copy()
 
-        data_white = white_trackbars.getTrackbarValues() # returns: (h_min, h_max, s_min, s_max, v_min, v_max, threshold1, threshold2, areaMin)
+        data_white = white_trackbars.get_trackbar_values()  # returns: (h_min, h_max, s_min, s_max, v_min, v_max, threshold1, threshold2, areaMin)
         areaMin_white = data_white[-1]
 
-        imgDil, result = prepareImg(data_white, img)
+        imgDil, result = prepare_img(data_white, img)
 
-        direction, area, crop_xywh = getContours(img, imgDil, imgContour, width, height, deadZone, areaMin_white, green_trackbars)
+        direction, area, crop_xywh = get_contours(img, imgDil, imgContour, width, height, deadZone, areaMin_white, green_trackbars)
         display(imgContour, width, height, deadZone)
 
 
         # candidate processing
 
-        stack = stackImages(1, ([img, result], [imgDil, imgContour]))
+        stack = stack_images(1, ([img, result], [imgDil, imgContour]))
         cv2.imshow('Horizontal Stacking', stack)
 
 
