@@ -103,7 +103,7 @@ def prepareImg(data, img):
     imgDil = cv2.dilate(imgCanny, kernel, iterations=2)
     return imgDil, result
 
-def getContoursTemp(img, imgContour, areaMin):
+def getCandidateContours(img, imgContour, areaMin):
     direction = 0
     area = 0
     crop_xywh = None
@@ -122,7 +122,12 @@ def getContoursTemp(img, imgContour, areaMin):
 
             cv2.rectangle(imgContour, (x, y), (x + w, y + h), (0, 255, 0), 5)
 
-def getContours(img, imgContour, frameWidth, frameHeight, deadZone, areaMin):
+    if area is not 0 :
+        return 1
+    else:
+        return 0
+
+def getContours(raw_img, img, imgContour, frameWidth, frameHeight, deadZone, areaMin, green_trackbars):
     direction = 0
     area = 0
     crop_xywh = None
@@ -141,50 +146,69 @@ def getContours(img, imgContour, frameWidth, frameHeight, deadZone, areaMin):
             x, y, w, h = cv2.boundingRect(approx)
             crop_xywh = x, y, w, h
 
+            if crop_xywh is not None:
+                x, y, w, h = crop_xywh
+                candidate_img = raw_img[y:y + h, x:x + w]
+                candidate_img = cv2.resize(candidate_img, (320, 240))
+            else:
+                candidate_img = np.zeros((240, 320, 3), np.uint8)
+
+            candContour = candidate_img.copy()
+            data_green = green_trackbars.getTrackbarValues()
+            areaMin_green = data_green[-1]
+
+            candDil, candRes = prepareImg(data_green, candidate_img)
+            correctCandidate = getCandidateContours(candDil, candContour, areaMin_green)
+
+            stack_cand = stackImages(1, ([candidate_img, candRes], [candDil, candContour]))
+            cv2.imshow('candidate', stack_cand)
+
             cv2.rectangle(imgContour, (x, y), (x + w, y + h), (0, 255, 0), 5)
 
+            if correctCandidate:
+                # cv2.putText(imgContour, "Points: " + str(len(approx)), (x + w + 20, y + 20), cv2.FONT_HERSHEY_COMPLEX, .7,
+                #             (0, 255, 0), 2)
+                # cv2.putText(imgContour, "Area: " + str(int(area)), (x + w + 20, y + 45), cv2.FONT_HERSHEY_COMPLEX, 0.7,
+                #             (0, 255, 0), 2)
+                # print(area)
+                # cv2.putText(imgContour, " " + str(int(x)) + " " + str(int(y)), (x - 20, y - 45), cv2.FONT_HERSHEY_COMPLEX,
+                #             0.7,
+                #             (0, 255, 0), 2)
 
-            # cv2.putText(imgContour, "Points: " + str(len(approx)), (x + w + 20, y + 20), cv2.FONT_HERSHEY_COMPLEX, .7,
-            #             (0, 255, 0), 2)
-            # cv2.putText(imgContour, "Area: " + str(int(area)), (x + w + 20, y + 45), cv2.FONT_HERSHEY_COMPLEX, 0.7,
-            #             (0, 255, 0), 2)
-            # print(area)
-            # cv2.putText(imgContour, " " + str(int(x)) + " " + str(int(y)), (x - 20, y - 45), cv2.FONT_HERSHEY_COMPLEX,
-            #             0.7,
-            #             (0, 255, 0), 2)
+                cx = int(x + (w / 2))
+                cy = int(y + (h / 2))
 
-            cx = int(x + (w / 2))
-            cy = int(y + (h / 2))
+                if (cx < int(frameWidth / 2) - deadZoneW):
+                    cv2.putText(imgContour, " GO LEFT ", (20, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255), 3)
+                    cv2.rectangle(imgContour, (0, int(frameHeight / 2 - deadZoneH)),
+                                  (int(frameWidth / 2) - deadZoneW, int(frameHeight / 2) + deadZoneH), (0, 0, 255),
+                                  cv2.FILLED)
+                    direction = 1
+                elif (cx > int(frameWidth / 2) + deadZoneW):
+                    cv2.putText(imgContour, " GO RIGHT ", (20, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255), 3)
+                    cv2.rectangle(imgContour, (int(frameWidth / 2 + deadZoneW), int(frameHeight / 2 - deadZoneH)),
+                                  (frameWidth, int(frameHeight / 2) + deadZoneH), (0, 0, 255), cv2.FILLED)
+                    direction = 2
+                elif (cy < int(frameHeight / 2) - deadZoneH):
+                    cv2.putText(imgContour, " GO UP ", (20, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255), 3)
+                    cv2.rectangle(imgContour, (int(frameWidth / 2 - deadZoneW), 0),
+                                  (int(frameWidth / 2 + deadZoneW), int(frameHeight / 2) - deadZoneH), (0, 0, 255),
+                                  cv2.FILLED)
+                    direction = 3
+                elif (cy > int(frameHeight / 2) + deadZoneH):
+                    cv2.putText(imgContour, " GO DOWN ", (20, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255), 3)
+                    cv2.rectangle(imgContour, (int(frameWidth / 2 - deadZoneW), int(frameHeight / 2) + deadZoneH),
+                                  (int(frameWidth / 2 + deadZoneW), frameHeight), (0, 0, 255), cv2.FILLED)
+                    direction = 4
+                else:
+                    direction = 0
 
-            if (cx < int(frameWidth / 2) - deadZoneW):
-                cv2.putText(imgContour, " GO LEFT ", (20, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255), 3)
-                cv2.rectangle(imgContour, (0, int(frameHeight / 2 - deadZoneH)),
-                              (int(frameWidth / 2) - deadZoneW, int(frameHeight / 2) + deadZoneH), (0, 0, 255),
-                              cv2.FILLED)
-                direction = 1
-            elif (cx > int(frameWidth / 2) + deadZoneW):
-                cv2.putText(imgContour, " GO RIGHT ", (20, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255), 3)
-                cv2.rectangle(imgContour, (int(frameWidth / 2 + deadZoneW), int(frameHeight / 2 - deadZoneH)),
-                              (frameWidth, int(frameHeight / 2) + deadZoneH), (0, 0, 255), cv2.FILLED)
-                direction = 2
-            elif (cy < int(frameHeight / 2) - deadZoneH):
-                cv2.putText(imgContour, " GO UP ", (20, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255), 3)
-                cv2.rectangle(imgContour, (int(frameWidth / 2 - deadZoneW), 0),
-                              (int(frameWidth / 2 + deadZoneW), int(frameHeight / 2) - deadZoneH), (0, 0, 255),
-                              cv2.FILLED)
-                direction = 3
-            elif (cy > int(frameHeight / 2) + deadZoneH):
-                cv2.putText(imgContour, " GO DOWN ", (20, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255), 3)
-                cv2.rectangle(imgContour, (int(frameWidth / 2 - deadZoneW), int(frameHeight / 2) + deadZoneH),
-                              (int(frameWidth / 2 + deadZoneW), frameHeight), (0, 0, 255), cv2.FILLED)
-                direction = 4
+                cv2.line(imgContour, (int(frameWidth / 2), int(frameHeight / 2)), (cx, cy),
+                         (0, 0, 255), 3)
+
+                return direction, area, crop_xywh
             else:
-                direction = 0
-
-            cv2.line(imgContour, (int(frameWidth / 2), int(frameHeight / 2)), (cx, cy),
-                     (0, 0, 255), 3)
-
-            return direction, area, crop_xywh
+                continue
     return direction, area, crop_xywh
 
 

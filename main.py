@@ -22,9 +22,6 @@ green_num = 1
 white_trackbars = TrackbarWindow(white_num, color='white')
 green_trackbars = TrackbarWindow(green_num, color='green')
 
-
-
-
 while True:
     if drone.frame is not None:
         img = cv2.resize(drone.frame, (width, height))
@@ -35,29 +32,11 @@ while True:
 
         imgDil, result = prepareImg(data_white, img)
 
-        direction, area, crop_xywh = getContours(imgDil, imgContour, width, height, deadZone, areaMin_white)
+        direction, area, crop_xywh = getContours(img, imgDil, imgContour, width, height, deadZone, areaMin_white, green_trackbars)
         display(imgContour, width, height, deadZone)
 
 
         # candidate processing
-        if crop_xywh is not None:
-            x, y, w, h = crop_xywh
-            candidate_img = img[y:y+h, x:x+w]
-            candidate_img = cv2.resize(candidate_img, (320, 240))
-        else:
-            candidate_img = np.zeros((240, 320, 3), np.uint8)
-
-        candContour = candidate_img.copy()
-        data_green = green_trackbars.getTrackbarValues()
-        areaMin_green = data_green[-1]
-
-        candDil, candRes = prepareImg(data_green, candidate_img)
-        getContoursTemp(candDil, candContour, areaMin_green)
-
-
-
-        stack_cand = stackImages(1, ([candidate_img, candRes], [candDil, candContour]))
-        cv2.imshow('candidate', stack_cand)
 
         stack = stackImages(1, ([img, result], [imgDil, imgContour]))
         cv2.imshow('Horizontal Stacking', stack)
