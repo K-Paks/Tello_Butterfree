@@ -1,6 +1,6 @@
 from easytello import tello
 from easytello.stats import  Stats
-import cv2
+import cv2.cv2 as cv2
 import threading
 
 
@@ -9,7 +9,7 @@ class PokeTello(tello.Tello):
     background_frame_read = None
     frame = None
 
-    def send_command_no_response(self, command: str, query: bool = False):
+    def send_command_no_response(self, command: str):
         # New log entry created for the outbound command
         self.log.append(Stats(command, len(self.log)))
 
