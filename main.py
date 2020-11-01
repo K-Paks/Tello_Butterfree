@@ -11,6 +11,7 @@ fly = 0
 
 drone = PokeTello()
 print(drone.get_battery())
+drone.streamon()
 
 if fly:
     drone.takeoff()
@@ -23,34 +24,21 @@ green_trackbars = TrackbarWindow(1)
 
 
 
-
-
-
-drone.streamon()
-
 while True:
     if drone.frame is not None:
         img = cv2.resize(drone.frame, (width, height))
         imgContour = img.copy()
-        imgHsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-        h_min, h_max, s_min, s_max, v_min, v_max, threshold1, threshold2, areaMin = white_trackbars.getTrackbarValues()
+        data = white_trackbars.getTrackbarValues() # returns: (h_min, h_max, s_min, s_max, v_min, v_max, threshold1, threshold2, areaMin)
+        areaMin = data[-1]
 
-        lower = np.array([h_min, s_min, v_min])
-        upper = np.array([h_max, s_max, v_max])
-        mask = cv2.inRange(imgHsv, lower, upper)
-        result = cv2.bitwise_and(img, img, mask=mask)
-        mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
+        imgDil, result = prepareImg(data, img)
 
-        imgBlur = cv2.GaussianBlur(result, (5, 5), 1)
-        imgGray = cv2.cvtColor(imgBlur, cv2.COLOR_BGR2GRAY)
-        imgCanny = cv2.Canny(imgGray, threshold1, threshold2)
-
-        kernel = np.ones((5, 5))
-        imgDil = cv2.dilate(imgCanny, kernel, iterations=2)
         direction, area, crop_xywh = getContours(imgDil, imgContour, width, height, deadZone, areaMin)
         display(imgContour, width, height, deadZone)
 
+
+        # candidate
         if crop_xywh is not None:
             x, y, w, h = crop_xywh
             candidate_area = img[y:y+h, x:x+w]
@@ -59,12 +47,17 @@ while True:
             candidate_area = np.zeros((240, 320, 3), np.uint8)
         candidate_area = cv2.cvtColor(candidate_area, cv2.COLOR_BGR2GRAY)
 
+
+
+
         cv2.imshow('candidate', candidate_area)
 
         stack = stackImages(1, ([img, result], [imgDil, imgContour]))
-
         cv2.imshow('Horizontal Stacking', stack)
 
+
+
+        # steering
         lr, fb, ud, yaw = 0, 0, 0, 0
         if direction == 1:
             yaw = -40

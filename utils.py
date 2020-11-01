@@ -82,6 +82,23 @@ def stackImages(scale, imgArray):
     return ver
 
 
+def prepareImg(data, img):
+    imgHsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    h_min, h_max, s_min, s_max, v_min, v_max, threshold1, threshold2, areaMin = data
+
+    lower = np.array([h_min, s_min, v_min])
+    upper = np.array([h_max, s_max, v_max])
+    mask = cv2.inRange(imgHsv, lower, upper)
+    result = cv2.bitwise_and(img, img, mask=mask)
+    mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
+
+    imgBlur = cv2.GaussianBlur(result, (5, 5), 1)
+    imgGray = cv2.cvtColor(imgBlur, cv2.COLOR_BGR2GRAY)
+    imgCanny = cv2.Canny(imgGray, threshold1, threshold2)
+
+    kernel = np.ones((5, 5))
+    imgDil = cv2.dilate(imgCanny, kernel, iterations=2)
+    return imgDil, result
 
 def getContours(img, imgContour, frameWidth, frameHeight, deadZone, areaMin):
     direction = 0
