@@ -35,8 +35,6 @@ while True:
         imgHsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
         h_min, h_max, s_min, s_max, v_min, v_max, threshold1, threshold2, areaMin = white_trackbars.getTrackbarValues()
-        print(h_min, h_max, s_min, s_max, v_min, v_max)
-
 
         lower = np.array([h_min, s_min, v_min])
         upper = np.array([h_max, s_max, v_max])
@@ -50,8 +48,18 @@ while True:
 
         kernel = np.ones((5, 5))
         imgDil = cv2.dilate(imgCanny, kernel, iterations=2)
-        direction, area = getContours(imgDil, imgContour, width, height, deadZone, areaMin)
+        direction, area, crop_xywh = getContours(imgDil, imgContour, width, height, deadZone, areaMin)
         display(imgContour, width, height, deadZone)
+
+        if crop_xywh is not None:
+            x, y, w, h = crop_xywh
+            candidate_area = img[y:y+h, x:x+w]
+            candidate_area = cv2.resize(candidate_area, (320, 240))
+        else:
+            candidate_area = np.zeros((240, 320, 3), np.uint8)
+        candidate_area = cv2.cvtColor(candidate_area, cv2.COLOR_BGR2GRAY)
+
+        cv2.imshow('candidate', candidate_area)
 
         stack = stackImages(1, ([img, result], [imgDil, imgContour]))
 
@@ -76,7 +84,7 @@ while True:
         else:
             fb = 0
 
-        print(fb)
+        # print(fb)
 
         drone.rc_control(lr, fb, ud, yaw)
 

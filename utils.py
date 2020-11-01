@@ -2,19 +2,20 @@ import cv2.cv2 as cv2
 import numpy as np
 from typing import Optional
 
+
 def empty(a):
     pass
 
+
+# class used to create trackbar window and get their parameters
 class TrackbarWindow():
     def __init__(self, num, color=None):
-        if color == 'white':
+        if color == 'white': #predefined values for mapping whites only
             init_h_min, init_h_max, init_s_min, init_s_max, init_v_min, init_v_max = 0, 179, 0, 59, 220, 255
             init_thr1, init_thr2, init_area = 166, 171, 2000
         else:
             init_h_min, init_h_max, init_s_min, init_s_max, init_v_min, init_v_max = 0, 179, 0, 255, 0, 255
             init_thr1, init_thr2, init_area = 0, 255, 0
-
-
 
         cv2.namedWindow(f"HSV_{num}")
         cv2.resizeWindow(f"HSV_{num}", 640, 240)
@@ -45,9 +46,6 @@ class TrackbarWindow():
         areaMin = cv2.getTrackbarPos(f"Area_{self.num}", f"Parameters_{self.num}")
 
         return h_min, h_max, s_min, s_max, v_min, v_max, threshold1, threshold2, areaMin
-
-
-
 
 
 # code by Murtaza's Workshop (Youtube)
@@ -88,6 +86,7 @@ def stackImages(scale, imgArray):
 def getContours(img, imgContour, frameWidth, frameHeight, deadZone, areaMin):
     direction = 0
     area = 0
+    crop_xywh = None
 
     contours, hierarchy = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     deadZoneW = deadZone
@@ -101,13 +100,16 @@ def getContours(img, imgContour, frameWidth, frameHeight, deadZone, areaMin):
             approx = cv2.approxPolyDP(cnt, 0.02 * peri, True)
 
             x, y, w, h = cv2.boundingRect(approx)
+            crop_xywh = x, y, w, h
+
             cv2.rectangle(imgContour, (x, y), (x + w, y + h), (0, 255, 0), 5)
+
 
             # cv2.putText(imgContour, "Points: " + str(len(approx)), (x + w + 20, y + 20), cv2.FONT_HERSHEY_COMPLEX, .7,
             #             (0, 255, 0), 2)
             # cv2.putText(imgContour, "Area: " + str(int(area)), (x + w + 20, y + 45), cv2.FONT_HERSHEY_COMPLEX, 0.7,
             #             (0, 255, 0), 2)
-            print(area)
+            # print(area)
             # cv2.putText(imgContour, " " + str(int(x)) + " " + str(int(y)), (x - 20, y - 45), cv2.FONT_HERSHEY_COMPLEX,
             #             0.7,
             #             (0, 255, 0), 2)
@@ -143,15 +145,20 @@ def getContours(img, imgContour, frameWidth, frameHeight, deadZone, areaMin):
             cv2.line(imgContour, (int(frameWidth / 2), int(frameHeight / 2)), (cx, cy),
                      (0, 0, 255), 3)
 
-            return direction, area
-    return direction, area
+            return direction, area, crop_xywh
+    return direction, area, crop_xywh
+
 
 def display(img, frameWidth, frameHeight, deadZone):
     deadZoneW = deadZone
     deadZoneH = deadZone - 15
-    cv2.line(img, (int(frameWidth / 2) - deadZoneW, 0), (int(frameWidth / 2) - deadZoneW, frameHeight), (255, 255, 0), 3)
-    cv2.line(img, (int(frameWidth / 2) + deadZoneW, 0), (int(frameWidth / 2) + deadZoneW, frameHeight), (255, 255, 0), 3)
+    cv2.line(img, (int(frameWidth / 2) - deadZoneW, 0), (int(frameWidth / 2) - deadZoneW, frameHeight), (255, 255, 0),
+             3)
+    cv2.line(img, (int(frameWidth / 2) + deadZoneW, 0), (int(frameWidth / 2) + deadZoneW, frameHeight), (255, 255, 0),
+             3)
 
     cv2.circle(img, (int(frameWidth / 2), int(frameHeight / 2)), 5, (0, 0, 255), 5)
-    cv2.line(img, (0, int(frameHeight / 2) - deadZoneH), (frameWidth, int(frameHeight / 2) - deadZoneH), (255, 255, 0), 3)
-    cv2.line(img, (0, int(frameHeight / 2) + deadZoneH), (frameWidth, int(frameHeight / 2) + deadZoneH), (255, 255, 0), 3)
+    cv2.line(img, (0, int(frameHeight / 2) - deadZoneH), (frameWidth, int(frameHeight / 2) - deadZoneH), (255, 255, 0),
+             3)
+    cv2.line(img, (0, int(frameHeight / 2) + deadZoneH), (frameWidth, int(frameHeight / 2) + deadZoneH), (255, 255, 0),
+             3)
