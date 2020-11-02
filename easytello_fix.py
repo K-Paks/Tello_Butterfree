@@ -1,5 +1,5 @@
 from easytello import tello
-from easytello.stats import  Stats
+from easytello.stats import Stats
 import cv2.cv2 as cv2
 import threading
 
