@@ -6,7 +6,7 @@ import numpy as np
 def empty(a):
     pass
 
-
+print('test')
 # class used to create trackbar window and get their parameters
 class TrackbarWindow:
     def __init__(self, num, color=None):
@@ -15,7 +15,7 @@ class TrackbarWindow:
             init_thr1, init_thr2, init_area = 166, 171, 2000
         elif color == 'green':
             init_h_min, init_h_max, init_s_min, init_s_max, init_v_min, init_v_max = 55, 90, 30, 170, 40, 245
-            init_thr1, init_thr2, init_area = 0, 255, 3000
+            init_thr1, init_thr2, init_area = 0, 255, 2500
         else:
             init_h_min, init_h_max, init_s_min, init_s_max, init_v_min, init_v_max = 0, 179, 0, 255, 0, 255
             init_thr1, init_thr2, init_area = 0, 255, 0
@@ -96,7 +96,6 @@ def prepare_img(data, img):
     upper = np.array([h_max, s_max, v_max])
     mask = cv2.inRange(img_hsv, lower, upper)
     result = cv2.bitwise_and(img, img, mask=mask)
-    # mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
 
     img_blur = cv2.GaussianBlur(result, (5, 5), 1)
     img_gray = cv2.cvtColor(img_blur, cv2.COLOR_BGR2GRAY)
@@ -108,15 +107,11 @@ def prepare_img(data, img):
 
 
 def get_candidate_contours(img, img_contour, area_min):
-    area = 0
-    # crop_xywh = None
-
     contours, hierarchy = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
     for cnt in contours:
         area = cv2.contourArea(cnt)
         if area > area_min:
-            print(area, area_min)
             cv2.drawContours(img_contour, cnt, -1, (255, 0, 255), 7)
             peri = cv2.arcLength(cnt, True)
             approx = cv2.approxPolyDP(cnt, 0.02 * peri, True)
@@ -125,17 +120,11 @@ def get_candidate_contours(img, img_contour, area_min):
             # crop_xywh = x, y, w, h
 
             cv2.rectangle(img_contour, (x, y), (x + w, y + h), (0, 255, 0), 5)
-        else:
-            area = 0
-
-    print(area)
-    if area is not 0:
-        return 1
-    else:
-        return 0
+            return 1
+    return 0
 
 
-def get_contours(raw_img, img, img_contour, frame_w, frame_h, dead_zone, area_min, green_trackbars):
+def get_contours(raw_img, img, img_contour, frame_w, frame_h, dead_zone, area_min, green_trackbars=None):
     direction = 0
     area = 0
     crop_xywh = None
@@ -147,8 +136,8 @@ def get_contours(raw_img, img, img_contour, frame_w, frame_h, dead_zone, area_mi
     for cnt in contours:
 
         area = cv2.contourArea(cnt)
-        if area > area_min:
 
+        if area > area_min:
             cv2.drawContours(img_contour, cnt, -1, (255, 0, 255), 3)
             peri = cv2.arcLength(cnt, True)
             approx = cv2.approxPolyDP(cnt, 0.02 * peri, True)
@@ -204,7 +193,7 @@ def get_contours(raw_img, img, img_contour, frame_w, frame_h, dead_zone, area_mi
                 cx = int(x + (w / 2))
                 cy = int(y + (h / 2))
                 # print(cx, cy)
-
+                #
                 # if cx < int(frame_w / 2) - dead_zone_w:
                 #     cv2.putText(img_contour, " GO LEFT ", (20, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255), 3)
                 #     cv2.rectangle(img_contour, (0, int(frame_h / 2 - dea_zone_h)),
