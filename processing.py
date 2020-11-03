@@ -83,13 +83,13 @@ def create_candidates(crop_xywh, raw_img, cnt):
     """Function that, if a object is found, returns a candidate image of it.
 
     Parameters:
-    crop_xywh (np.ndarray): an array of bounding box values [x,  y, width, height].
-    raw_img (np.ndarray): original drone image.
-    cnt (np.ndarray): contours for a given object.
+    crop_xywh (np.ndarray): An array of bounding box values [x,  y, width, height].
+    raw_img (np.ndarray): Original drone image.
+    cnt (np.ndarray): Contours for a given object.
 
     Returns:
-    candidate_img (np.ndarray): the original image cropped into the found object bounding box's size.
-    candidate_cropped (np.ndarray): a cropped version of the candidate image.
+    candidate_img (np.ndarray): The original image cropped into the found object bounding box's size.
+    candidate_cropped (np.ndarray): A cropped version of the candidate image.
     """
     if crop_xywh is not None:
         x, y, w, h = crop_xywh
@@ -109,19 +109,19 @@ def create_candidates(crop_xywh, raw_img, cnt):
     return candidate_img, candidate_cropped
 
 
-def get_contours(img, img_contour, area_min, raw_img, data_green):
+def get_contours(raw_img, img, img_contour, area_min, data_green):
     """Function that finds the objects' contours, finds the candidate object and invokes functions
     that crop it into stand-alone image.
 
     Parameters:
+    raw_img (np.ndarray): The original image from the drone.
     img (np.ndarray): Image preprocessed by `prepare_img` function.
-    img_contour (np.ndarray): #TODO
+    img_contour (np.ndarray): Image on which contours of the detected objects will be drawn.
     area_min (int): Minimal area of an object to become recognized.
-    raw_img (np.ndarray): the original image from the drone.
-    data_green (#TODO): trackbars' parameters for the green color recognition.
+    data_green (tuple): Trackbars' parameters for the green color recognition.
     """
     area = 0  # if contours not found, area = 0
-    frame_h, frame_w = list(img.shape)
+    frame_h, frame_w = list(img.shape[:2])
 
     contours, hierarchy = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
@@ -148,7 +148,6 @@ def get_contours(img, img_contour, area_min, raw_img, data_green):
                 cv2.imshow('candidate', stack_cand)
 
                 area = 0
-                return area
 
             elif correct_candidate:
                 x, y, w, h = xywh

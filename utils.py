@@ -6,6 +6,7 @@ import numpy as np
 
 # code by Murtaza's Workshop (Youtube)
 def stack_images(scale, img_array):
+    """Stacks multiple images for cv2.imshow()."""
     rows = len(img_array)
     cols = len(img_array[0])
     rows_available = isinstance(img_array[0], list)
@@ -42,6 +43,11 @@ def stack_images(scale, img_array):
 
 
 def prepare_img(data, img):
+    """Preprocessing for Cannny Edge Detector
+
+    data (tuple): Data used to create the mask.
+    img (np.ndarray): The original image.
+    """
     img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     h_min, h_max, s_min, s_max, v_min, v_max, threshold1, threshold2, area_min = data
 
