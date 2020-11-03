@@ -14,7 +14,7 @@ class TrackbarWindow:
             init_h_min, init_h_max, init_s_min, init_s_max, init_v_min, init_v_max = 0, 179, 0, 59, 220, 255
             init_thr1, init_thr2, init_area = 166, 171, 2000
         elif color == 'green':
-            init_h_min, init_h_max, init_s_min, init_s_max, init_v_min, init_v_max = 75, 90, 30, 170, 40, 245
+            init_h_min, init_h_max, init_s_min, init_s_max, init_v_min, init_v_max = 55, 90, 30, 170, 40, 245
             init_thr1, init_thr2, init_area = 0, 255, 1000
         else:
             init_h_min, init_h_max, init_s_min, init_s_max, init_v_min, init_v_max = 0, 179, 0, 255, 0, 255
@@ -141,14 +141,22 @@ def get_contours(raw_img, img, img_contour, frame_w, frame_h, dead_zone, area_mi
     dea_zone_h = dead_zone - 15
 
     for cnt in contours:
+
         area = cv2.contourArea(cnt)
         if area > area_min:
-            cv2.drawContours(img_contour, cnt, -1, (255, 0, 255), 7)
+
+            cv2.drawContours(img_contour, contours, -1, (255, 0, 255), 3)
             peri = cv2.arcLength(cnt, True)
             approx = cv2.approxPolyDP(cnt, 0.02 * peri, True)
 
             x, y, w, h = cv2.boundingRect(approx)
             crop_xywh = x, y, w, h
+
+            mask = np.ones(raw_img.shape[:2])
+            mask = cv2.drawContours(mask, [cnt], -1, 0, cv2.FILLED)
+            candidate_img2 = raw_img.copy()
+            candidate_img2[mask.astype(np.bool), :] = 0
+            candidate_img2 = cv2.resize(candidate_img2, (320, 240))
 
             if crop_xywh is not None:
                 x, y, w, h = crop_xywh
@@ -166,12 +174,11 @@ def get_contours(raw_img, img, img_contour, frame_w, frame_h, dead_zone, area_mi
 
             if not correct_candidate:
                 no_candidate = np.zeros((240, 320, 3), np.uint8)
-                stack_cand = stack_images(1, ([no_candidate, no_candidate], [no_candidate, no_candidate]))
+                stack_cand = stack_images(1, ([no_candidate, cand_res], [cand_dil, candidate_img2]))
                 cv2.imshow('candidate', stack_cand)
 
             elif correct_candidate:
-                print(area)
-                stack_cand = stack_images(1, ([candidate_img, cand_res], [cand_dil, cand_contour]))
+                stack_cand = stack_images(1, ([candidate_img, cand_res], [cand_dil, candidate_img2]))
                 cv2.imshow('candidate', stack_cand)
 
                 cv2.rectangle(img_contour, (x, y), (x + w, y + h), (0, 255, 0), 5)
@@ -187,31 +194,32 @@ def get_contours(raw_img, img, img_contour, frame_w, frame_h, dead_zone, area_mi
 
                 cx = int(x + (w / 2))
                 cy = int(y + (h / 2))
+                # print(cx, cy)
 
-                if cx < int(frame_w / 2) - dead_zone_w:
-                    cv2.putText(img_contour, " GO LEFT ", (20, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255), 3)
-                    cv2.rectangle(img_contour, (0, int(frame_h / 2 - dea_zone_h)),
-                                  (int(frame_w / 2) - dead_zone_w, int(frame_h / 2) + dea_zone_h), (0, 0, 255),
-                                  cv2.FILLED)
-                    direction = 1
-                elif cx > int(frame_w / 2) + dead_zone_w:
-                    cv2.putText(img_contour, " GO RIGHT ", (20, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255), 3)
-                    cv2.rectangle(img_contour, (int(frame_w / 2 + dead_zone_w), int(frame_h / 2 - dea_zone_h)),
-                                  (frame_w, int(frame_h / 2) + dea_zone_h), (0, 0, 255), cv2.FILLED)
-                    direction = 2
-                elif cy < int(frame_h / 2) - dea_zone_h:
-                    cv2.putText(img_contour, " GO UP ", (20, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255), 3)
-                    cv2.rectangle(img_contour, (int(frame_w / 2 - dead_zone_w), 0),
-                                  (int(frame_w / 2 + dead_zone_w), int(frame_h / 2) - dea_zone_h), (0, 0, 255),
-                                  cv2.FILLED)
-                    direction = 3
-                elif cy > int(frame_h / 2) + dea_zone_h:
-                    cv2.putText(img_contour, " GO DOWN ", (20, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255), 3)
-                    cv2.rectangle(img_contour, (int(frame_w / 2 - dead_zone_w), int(frame_h / 2) + dea_zone_h),
-                                  (int(frame_w / 2 + dead_zone_w), frame_h), (0, 0, 255), cv2.FILLED)
-                    direction = 4
-                else:
-                    direction = 0
+                # if cx < int(frame_w / 2) - dead_zone_w:
+                #     cv2.putText(img_contour, " GO LEFT ", (20, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255), 3)
+                #     cv2.rectangle(img_contour, (0, int(frame_h / 2 - dea_zone_h)),
+                #                   (int(frame_w / 2) - dead_zone_w, int(frame_h / 2) + dea_zone_h), (0, 0, 255),
+                #                   cv2.FILLED)
+                #     direction = 1
+                # elif cx > int(frame_w / 2) + dead_zone_w:
+                #     cv2.putText(img_contour, " GO RIGHT ", (20, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255), 3)
+                #     cv2.rectangle(img_contour, (int(frame_w / 2 + dead_zone_w), int(frame_h / 2 - dea_zone_h)),
+                #                   (frame_w, int(frame_h / 2) + dea_zone_h), (0, 0, 255), cv2.FILLED)
+                #     direction = 2
+                # elif cy < int(frame_h / 2) - dea_zone_h:
+                #     cv2.putText(img_contour, " GO UP ", (20, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255), 3)
+                #     cv2.rectangle(img_contour, (int(frame_w / 2 - dead_zone_w), 0),
+                #                   (int(frame_w / 2 + dead_zone_w), int(frame_h / 2) - dea_zone_h), (0, 0, 255),
+                #                   cv2.FILLED)
+                #     direction = 3
+                # elif cy > int(frame_h / 2) + dea_zone_h:
+                #     cv2.putText(img_contour, " GO DOWN ", (20, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255), 3)
+                #     cv2.rectangle(img_contour, (int(frame_w / 2 - dead_zone_w), int(frame_h / 2) + dea_zone_h),
+                #                   (int(frame_w / 2 + dead_zone_w), frame_h), (0, 0, 255), cv2.FILLED)
+                #     direction = 4
+                # else:
+                #     direction = 0
 
                 cv2.line(img_contour, (int(frame_w / 2), int(frame_h / 2)), (cx, cy),
                          (0, 0, 255), 3)
