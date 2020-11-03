@@ -3,7 +3,6 @@ from utils import *
 #test3
 width = 320
 height = 240
-deadZone = 70
 
 fly = 0
 
@@ -30,12 +29,9 @@ while True:
 
         imgDil, result = prepare_img(data_white, img)
 
-        direction, area, crop_xywh = get_contours(img, imgDil, imgContour, width, height, deadZone, areaMin_white, green_trackbars)
-        display(imgContour, width, height, deadZone)
-
+        direction, area, crop_xywh = get_contours(img, imgDil, imgContour, areaMin_white, green_trackbars)
 
         # candidate processing
-
         stack = stack_images(1, ([img, result], [imgDil, imgContour]))
         cv2.imshow('Horizontal Stacking', stack)
 
