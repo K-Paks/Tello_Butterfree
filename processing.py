@@ -109,7 +109,7 @@ def create_candidates(crop_xywh, raw_img, cnt):
     return candidate_img, candidate_cropped
 
 
-def get_contours(raw_img, img, img_contour, area_min, data_green):
+def get_candidate(raw_img, img, img_contour, area_min, data_green):
     """Function that finds the objects' contours, finds the candidate object and invokes functions
     that crop it into stand-alone image.
 
@@ -121,7 +121,7 @@ def get_contours(raw_img, img, img_contour, area_min, data_green):
     data_green (tuple): Trackbars' parameters for the green color recognition.
     """
     area = 0  # if contours not found, area = 0
-    frame_h, frame_w = list(img.shape[:2])
+    frame_h, frame_w = tuple(img.shape[:2])
 
     contours, hierarchy = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
@@ -163,6 +163,35 @@ def get_contours(raw_img, img, img_contour, area_min, data_green):
                 cv2.line(img_contour, (int(frame_w / 2), int(frame_h / 2)), (cx, cy),
                          (0, 0, 255), 3)
 
-                return area  # if correct candidate found, return the area
-    return area
+                return area, (cx, cy)  # if correct candidate found, return the area
+    return area, (-1, -1)
+
+def follow_candidate(drone, img_xy, hat_xy, area):
+    # ix, iy = img_xy
+    # gx, gy = hat_xy
+
+    change = (np.asarray(hat_xy) - np.asarray(img_xy))/20
+    change = np.power(change, 2)
+    print(change)
+
+    # forward/backward
+    if area < 4000 and area != 0:
+        fb = 15
+    elif area > 5000:
+        fb = -15
+    else:
+        fb = 0
+
+
+    drone.rc_control(0, fb, change[1], 0)
+
+
+
+    # left/right
+
+    # up/down
+
+
+
+
 

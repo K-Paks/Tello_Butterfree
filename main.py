@@ -4,7 +4,7 @@ from utils import *
 width = 320
 height = 240
 
-fly = 0
+fly = 1
 
 drone = PokeTello()
 print(drone.get_battery())
@@ -24,13 +24,15 @@ while True:
         img = cv2.resize(drone.frame, (width, height))
         imgContour = img.copy()
 
+
         data_white = white_trackbars.get_trackbar_values()  # returns: (h_min, h_max, s_min, s_max, v_min, v_max, threshold1, threshold2, areaMin)
         data_green = green_trackbars.get_trackbar_values()
         areaMin_white = data_white[-1]
 
         imgDil, result = prepare_img(data_white, img)
 
-        area = get_contours(img, imgDil, imgContour, areaMin_white, data_green)
+        area, hat_xy = get_candidate(img, imgDil, imgContour, areaMin_white, data_green)
+        img_xy = (img.shape[1]/2, img.shape[0]/2)
 
         # candidate processing
         stack = stack_images(1, ([img, result], [imgDil, imgContour]))
@@ -39,26 +41,10 @@ while True:
 
 
         # steering
-        lr, fb, ud, yaw = 0, 0, 0, 0
-        # if direction == 1:
-        #     yaw = -40
-        # elif direction == 2:
-        #     yaw = 40
-        # elif direction == 3:
-        #     ud = 40
-        # elif direction == 4:
-        #     ud = -40
-        # else:
-        #     ud, yaw = 0, 0
+        if sum(hat_xy) >= 0:
+            follow_candidate(drone, img_xy, hat_xy, area)
 
-        if area < 4000 and area != 0:
-            fb = 15
-        elif area > 5000:
-            fb = -15
-        else:
-            fb = 0
 
-        drone.rc_control(lr, fb, ud, yaw)
 
 
         # Video Stream is closed if escape key is pressed
