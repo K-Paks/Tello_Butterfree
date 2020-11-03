@@ -15,7 +15,7 @@ class TrackbarWindow:
             init_thr1, init_thr2, init_area = 166, 171, 2000
         elif color == 'green':
             init_h_min, init_h_max, init_s_min, init_s_max, init_v_min, init_v_max = 55, 90, 30, 170, 40, 245
-            init_thr1, init_thr2, init_area = 0, 255, 1000
+            init_thr1, init_thr2, init_area = 0, 255, 3000
         else:
             init_h_min, init_h_max, init_s_min, init_s_max, init_v_min, init_v_max = 0, 179, 0, 255, 0, 255
             init_thr1, init_thr2, init_area = 0, 255, 0
@@ -116,6 +116,7 @@ def get_candidate_contours(img, img_contour, area_min):
     for cnt in contours:
         area = cv2.contourArea(cnt)
         if area > area_min:
+            print(area, area_min)
             cv2.drawContours(img_contour, cnt, -1, (255, 0, 255), 7)
             peri = cv2.arcLength(cnt, True)
             approx = cv2.approxPolyDP(cnt, 0.02 * peri, True)
@@ -124,7 +125,10 @@ def get_candidate_contours(img, img_contour, area_min):
             # crop_xywh = x, y, w, h
 
             cv2.rectangle(img_contour, (x, y), (x + w, y + h), (0, 255, 0), 5)
+        else:
+            area = 0
 
+    print(area)
     if area is not 0:
         return 1
     else:
@@ -145,25 +149,28 @@ def get_contours(raw_img, img, img_contour, frame_w, frame_h, dead_zone, area_mi
         area = cv2.contourArea(cnt)
         if area > area_min:
 
-            cv2.drawContours(img_contour, contours, -1, (255, 0, 255), 3)
+            cv2.drawContours(img_contour, cnt, -1, (255, 0, 255), 3)
             peri = cv2.arcLength(cnt, True)
             approx = cv2.approxPolyDP(cnt, 0.02 * peri, True)
 
             x, y, w, h = cv2.boundingRect(approx)
             crop_xywh = x, y, w, h
 
-            mask = np.ones(raw_img.shape[:2])
-            mask = cv2.drawContours(mask, [cnt], -1, 0, cv2.FILLED)
-            candidate_img2 = raw_img.copy()
-            candidate_img2[mask.astype(np.bool), :] = 0
-            candidate_img2 = cv2.resize(candidate_img2, (320, 240))
-
             if crop_xywh is not None:
                 x, y, w, h = crop_xywh
                 candidate_img = raw_img[y:y + h, x:x + w]
                 candidate_img = cv2.resize(candidate_img, (320, 240))
+
+                mask = np.ones(raw_img.shape[:2])
+                mask = cv2.drawContours(mask, [cnt], -1, 0, cv2.FILLED)
+                candidate_img2 = raw_img.copy()
+                candidate_img2[mask.astype(np.bool), :] = 0
+
+                candidate_img2 = candidate_img2[y:y + h, x:x + w]
+                candidate_img2 = cv2.resize(candidate_img2, (320, 240))
             else:
                 candidate_img = np.zeros((240, 320, 3), np.uint8)
+                candidate_img2 = np.zeros((240, 320, 3), np.uint8)
 
             cand_contour = candidate_img.copy()
             data_green = green_trackbars.get_trackbar_values()
@@ -174,14 +181,16 @@ def get_contours(raw_img, img, img_contour, frame_w, frame_h, dead_zone, area_mi
 
             if not correct_candidate:
                 no_candidate = np.zeros((240, 320, 3), np.uint8)
-                stack_cand = stack_images(1, ([no_candidate, cand_res], [cand_dil, candidate_img2]))
+                candidate_img2 = np.zeros((240, 320, 3), np.uint8)
+                stack_cand = stack_images(1, ([no_candidate, cand_res, img_contour], [cand_dil, candidate_img2, np.zeros((240, 320, 3), np.uint8)]))
                 cv2.imshow('candidate', stack_cand)
 
             elif correct_candidate:
-                stack_cand = stack_images(1, ([candidate_img, cand_res], [cand_dil, candidate_img2]))
+                cv2.rectangle(img_contour, (x, y), (x + w, y + h), (0, 255, 0), 5)
+
+                stack_cand = stack_images(1, ([candidate_img, cand_res, img_contour], [cand_dil, candidate_img2, np.zeros((240, 320, 3), np.uint8)]))
                 cv2.imshow('candidate', stack_cand)
 
-                cv2.rectangle(img_contour, (x, y), (x + w, y + h), (0, 255, 0), 5)
 
                 # cv2.putText(img_contour, "Points: " + str(len(approx)), (x + w + 20, y + 20), cv2.FONT_HERSHEY_COMPLEX, .7,
                 #             (0, 255, 0), 2)

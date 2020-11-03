@@ -7,12 +7,12 @@ deadZone = 70
 
 fly = 0
 
-# drone = PokeTello()
-# print(drone.get_battery())
-# drone.streamon()
+drone = PokeTello()
+print(drone.get_battery())
+drone.streamon()
 
-# if fly:
-    # drone.takeoff()
+if fly:
+    drone.takeoff()
 
 # create trackbars
 white_num = 0
@@ -21,10 +21,8 @@ white_trackbars = TrackbarWindow(white_num, color='white')
 green_trackbars = TrackbarWindow(green_num, color='green')
 
 while True:
-    # if drone.frame is not None:
-    #     img = cv2.resize(drone.frame, (width, height))
-        img = cv2.imread('captured.jpg')
-        img = cv2.resize(img, (320, 240))
+    if drone.frame is not None:
+        img = cv2.resize(drone.frame, (width, height))
         imgContour = img.copy()
 
         data_white = white_trackbars.get_trackbar_values()  # returns: (h_min, h_max, s_min, s_max, v_min, v_max, threshold1, threshold2, areaMin)
@@ -65,8 +63,8 @@ while True:
 
         # print(fb)
 
-        # drone.rc_control(lr, fb, ud, yaw)
-        # # print(drone.get_acceleration())
+        drone.rc_control(lr, fb, ud, yaw)
+        # print(drone.get_acceleration())
 
         # cv2.imshow('Cap', img)
         # cv2.imshow('Cap2', imgHsv)
@@ -79,4 +77,4 @@ while True:
         k = cv2.waitKey(1) & 0xFF
         if k == 27:
             break
-# drone.land()
+drone.land()
