@@ -1,5 +1,5 @@
 # Tello_Butterfree
-Hat-following system for Tello Drone. Built with OpenCV and easytello. Work in progress. 
+Hat-following system for Tello Drone. Built with OpenCV and easytello.
 
 ### Project roadmap (TODO):
 - [x] Basic object recognition.
